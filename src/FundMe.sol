@@ -26,6 +26,13 @@ contract fundMe {
         i_owner = msg.sender; //msg.sender is the address that deployed the contract
     }
 
+    function getVersion() public view returns (uint256) {
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(
+            0x694AA1769357215DE4FAC081bf1f309aDC325306
+        );
+        return priceFeed.version();
+    }
+
     //now the fund function
     function fund() public payable {
         //check if the amount sent is greater than or equal to the minimum

@@ -14,6 +14,7 @@ library PriceConverter {
     }
 
     function getConversionRate(
+        // conversion rate gets the amount of eth price in wei of 1 eth
         uint256 ethAmount
     ) internal view returns (uint256) {
         uint256 ethPrice = getPrice();
