@@ -5,10 +5,10 @@ pragma solidity ^0.8.19;
 import {AggregatorV3Interface} from "lib/chainlink-brownie-contracts/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import {PriceConverter} from "./PriceConverter.sol";
 
-error NotOwner();
+error FundMe__NotOwner();
 
 //purpose of this contract is for users to send money to contract
-contract fundMe {
+contract FundMe {
     using PriceConverter for uint256; //lets me use the price converter library functions here directly
     //mapping to store the address of the sender and the amount they sent
     mapping(address => uint256) public fundersToAmountFunded;
@@ -17,7 +17,7 @@ contract fundMe {
     address[] public funders;
 
     //minimum usd required to send money to the contract
-    uint256 public constant MINIMUM_USD = 5 * 10 ** 18;
+    uint256 public constant MINIMUM_USD = 5e18;
 
     //owner of this contract needs to be immutable
     address public immutable i_owner; //initialised once when the contract is deployed
@@ -48,7 +48,7 @@ contract fundMe {
 
     //use a onlyOwner modifier
     modifier onlyOwner() {
-        if (msg.sender == i_owner) revert NotOwner();
+        if (msg.sender == i_owner) revert FundMe__NotOwner();
         _;
     }
 
