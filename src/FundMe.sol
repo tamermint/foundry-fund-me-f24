@@ -11,10 +11,10 @@ error FundMe__NotOwner();
 contract FundMe {
     using PriceConverter for uint256; //lets me use the price converter library functions here directly
     //mapping to store the address of the sender and the amount they sent
-    mapping(address => uint256) public fundersToAmountFunded;
+    mapping(address => uint256) private s_fundersToAmountFunded;
 
     //array to store the addresses of the funders
-    address[] public funders;
+    address[] private s_funders;
 
     //minimum usd required to send money to the contract
     uint256 public constant MINIMUM_USD = 5e18;
@@ -42,9 +42,9 @@ contract FundMe {
             "Didn't send enough!"
         );
         //update the mapping
-        fundersToAmountFunded[msg.sender] += msg.value;
+        s_fundersToAmountFunded[msg.sender] += msg.value;
         //need to update the array
-        funders.push(msg.sender);
+        s_funders.push(msg.sender);
     }
 
     //use a onlyOwner modifier
@@ -58,18 +58,42 @@ contract FundMe {
         //transfer the money to the owner
         for (
             uint256 funderIndex = 0;
-            funderIndex < funders.length;
+            funderIndex < s_funders.length;
             funderIndex++
         ) {
-            address funder = funders[funderIndex];
-            fundersToAmountFunded[funder] = 0;
+            address funder = s_funders[funderIndex];
+            s_fundersToAmountFunded[funder] = 0;
         }
-        funders = new address[](0); //reset the array
+        s_funders = new address[](0); //reset the array
 
         //transfer amount to owner using call
         (bool callSuccess, ) = payable(msg.sender).call{
             value: address(this).balance
         }(""); //the total money in this contract
         require(callSuccess, "Call failed");
+    }
+
+    //receive and fallback functions to handle user tx
+    receive() external payable {
+        fund();
+    }
+
+    fallback() external payable {
+        fund();
+    }
+
+    //View and Pure functions - our getters
+    function getOwner() public view returns (address) {
+        return i_owner;
+    }
+
+    function getFunder(uint256 index) external view returns (address) {
+        return s_funders[index];
+    }
+
+    function getAddressToAmountFunded(
+        address sender
+    ) external view returns (uint256) {
+        return s_fundersToAmountFunded[sender];
     }
 }
