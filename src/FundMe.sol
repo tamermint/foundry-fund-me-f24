@@ -22,22 +22,23 @@ contract FundMe {
     //owner of this contract needs to be immutable
     address public immutable i_owner; //initialised once when the contract is deployed
 
-    constructor() {
+    //initializing a AggregatorV3 interface variable so that we can deploy using this variable in the constructor
+    AggregatorV3Interface private s_priceFeed;
+
+    constructor(address priceFeed) {
         i_owner = msg.sender; //msg.sender is the address that deployed the contract
+        s_priceFeed = AggregatorV3Interface(priceFeed);
     }
 
     function getVersion() public view returns (uint256) {
-        AggregatorV3Interface priceFeed = AggregatorV3Interface(
-            0x694AA1769357215DE4FAC081bf1f309aDC325306
-        );
-        return priceFeed.version();
+        return s_priceFeed.version();
     }
 
     //now the fund function
     function fund() public payable {
         //check if the amount sent is greater than or equal to the minimum
         require(
-            msg.value.getConversionRate() >= MINIMUM_USD,
+            msg.value.getConversionRate(s_priceFeed) >= MINIMUM_USD,
             "Didn't send enough!"
         );
         //update the mapping

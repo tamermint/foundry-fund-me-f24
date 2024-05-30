@@ -5,19 +5,20 @@ import {AggregatorV3Interface} from "lib/chainlink-brownie-contracts/contracts/s
 
 library PriceConverter {
     //this contract gets the value from the chainlink price feed
-    function getPrice() internal view returns (uint256) {
-        AggregatorV3Interface priceFeed = AggregatorV3Interface(
-            0x694AA1769357215DE4FAC081bf1f309aDC325306
-        );
+    function getPrice(
+        AggregatorV3Interface priceFeed
+    ) internal view returns (uint256) {
         (, int256 answer, , , ) = priceFeed.latestRoundData();
         return uint256(answer * 10000000000);
     }
 
     function getConversionRate(
         // conversion rate gets the amount of eth price in wei of 1 eth
-        uint256 ethAmount
+        uint256 ethAmount,
+        //passing in the price
+        AggregatorV3Interface priceFeed
     ) internal view returns (uint256) {
-        uint256 ethPrice = getPrice();
+        uint256 ethPrice = getPrice(priceFeed);
         uint256 ethAmountInUSD = (ethPrice * ethAmount) / 1000000000000000000;
         return ethAmountInUSD;
     }
