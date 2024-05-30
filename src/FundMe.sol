@@ -83,7 +83,7 @@ contract FundMe {
     }
 
     //View and Pure functions - our getters
-    function getOwner() public view returns (address) {
+    function getOwner() external view returns (address) {
         return i_owner;
     }
 
