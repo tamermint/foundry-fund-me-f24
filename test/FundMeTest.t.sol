@@ -40,17 +40,34 @@ contract FundMeTest is Test {
         fundMe.fund();
     }
 
-    function testFundUpdatesFundedDataStructure() public {
-        vm.prank(USER); //means the next tx will be sent by user
+    modifier funded() {
+        vm.prank(USER);
         fundMe.fund{value: SEND_VALUE}();
+        _;
+    }
+
+    function testFundUpdatesFundedDataStructure() public funded {
+        //tests whether the value gets updated against the correct address
         uint256 amountFunded = fundMe.getAddressToAmountFunded(USER);
         assertEq(amountFunded, SEND_VALUE);
     }
 
-    function testAddFunderToArrayOfFunders() public {
-        vm.prank(USER);
-        fundMe.fund{value: SEND_VALUE}();
+    function testAddFunderToArrayOfFunders() public funded {
+        //tests whether funder is getting added to the array
         address funder = fundMe.getFunder(0);
         assertEq(funder, USER);
+    }
+
+    function testOnlyOwnerCanWithdraw() public funded {
+        //tests whether onlyOwner modifier is working
+        vm.expectRevert(); //next step i.e. fundMe.withdraw to revert
+        vm.prank(USER); //reverts the user
+        fundMe.withdraw();
+    }
+
+    function testWithdrawWithASingleFunder() public funded {
+        //Arrange
+        //Act
+        //Assert
     }
 }
