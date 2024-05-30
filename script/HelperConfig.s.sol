@@ -9,6 +9,7 @@
 pragma solidity ^0.8.19;
 
 import {Script} from "forge-std/Script.sol";
+import {MockV3Aggregator} from "../test/mocks/mockV3AggregatorV3.sol";
 
 contract HelperConfig is Script {
     //if on local anvil, deploy mocks
@@ -17,11 +18,16 @@ contract HelperConfig is Script {
     //now we need to put the address in deploy fund me by retreiving the network config from here
     NetworkConfig public activeNetworkConfig; //if we are on sepolia, we get sepoliaEthConfig but if on anvil, we get anvilEthConfig
 
+    uint8 public constant DECIMALS = 8;
+    int256 public constant INITIAL_PRICE = 2000e8;
+
     constructor() {
         if (block.chainid == 11155111) {
             activeNetworkConfig = getSepoliaEthConfig();
+        } else if (block.chainid == 1) {
+            activeNetworkConfig = getMainnetEthConfig();
         } else {
-            activeNetworkConfig = getAnvilEthConfig();
+            activeNetworkConfig = getOrCreateAnvilEthConfig();
         }
     }
 
@@ -40,7 +46,35 @@ contract HelperConfig is Script {
         return sepoliaConfig;
     }
 
-    function getAnvilEthConfig() public pure returns (NetworkConfig memory) {
+    //if you want to deploy to mainnet
+    function getMainnetEthConfig() public pure returns (NetworkConfig memory) {
         //price feed address
+        NetworkConfig memory mainnetConfig = NetworkConfig({
+            priceFeed: 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419
+        });
+        return mainnetConfig;
+    }
+
+    function getOrCreateAnvilEthConfig() public returns (NetworkConfig memory) {
+        if (activeNetworkConfig.priceFeed != address(0)) {
+            //if already deployed to default address, no need to deploy again
+            return activeNetworkConfig;
+        }
+        //price feed address
+        //1. deploy mocks
+        //2. return mock addresses
+
+        vm.startBroadcast(); //create a new pricefeed contract and deploy
+        MockV3Aggregator mockPriceFeed = new MockV3Aggregator(
+            DECIMALS,
+            INITIAL_PRICE
+        );
+        vm.stopBroadcast();
+
+        NetworkConfig memory anvilConfig = NetworkConfig({
+            priceFeed: address(mockPriceFeed)
+        });
+
+        return anvilConfig;
     }
 }
