@@ -41,6 +41,7 @@ contract FundMeTest is Test {
     }
 
     modifier funded() {
+        //helps to emulate the msg.sender as owner and we don't have to repeat this in every test
         vm.prank(USER);
         fundMe.fund{value: SEND_VALUE}();
         _;
@@ -67,7 +68,46 @@ contract FundMeTest is Test {
 
     function testWithdrawWithASingleFunder() public funded {
         //Arrange
+        uint256 startingOwnerBalance = fundMe.getOwner().balance;
+        uint256 startingContractBalance = address(fundMe).balance;
         //Act
+        vm.prank(fundMe.getOwner());
+        fundMe.withdraw();
         //Assert
+        uint256 endingOwnerBalance = fundMe.getOwner().balance;
+        uint256 endingContractBalance = address(fundMe).balance;
+        assertEq(endingContractBalance, 0);
+        assertEq(
+            endingOwnerBalance,
+            startingOwnerBalance + startingContractBalance
+        );
+    }
+
+    function testWithdrawFromMultipleFunders() public funded {
+        //Arrange
+        uint160 numberOfFunders = 10;
+        uint160 startingFunderIndex = 1; //can't start with 0 because 0 address might revert due to solidity sanity checks
+        for (uint160 i = startingFunderIndex; i < numberOfFunders; i++) {
+            //make dummy address i.e. prank ---| Both of these can be acheived via 'hoax'
+            hoax(address(i), SEND_VALUE);
+            //deal money to these address -----| one thing to keep in mind, uint256 can't be converted to address type but uint160 can
+            //fund the fundMe contract
+            fundMe.fund{value: SEND_VALUE}();
+        }
+        //Act
+        uint256 startingOwnerBalance = fundMe.getOwner().balance;
+        uint256 startingContractBalance = address(fundMe).balance;
+        vm.startPrank(fundMe.getOwner());
+        fundMe.withdraw();
+        vm.stopPrank();
+
+        //Assert
+        uint256 endingOwnerBalance = fundMe.getOwner().balance;
+        uint256 endingContractBalance = address(fundMe).balance;
+        assertEq(endingContractBalance, 0);
+        assertEq(
+            endingOwnerBalance,
+            startingOwnerBalance + startingContractBalance
+        );
     }
 }
