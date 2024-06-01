@@ -89,6 +89,34 @@ contract FundMeTest is Test {
         );
     }
 
+    function testWithdrawFromMultipleFundersCheaper() public funded {
+        //Arrange
+        uint160 numberOfFunders = 10;
+        uint160 startingFunderIndex = 1; //can't start with 0 because 0 address might revert due to solidity sanity checks
+        for (uint160 i = startingFunderIndex; i < numberOfFunders; i++) {
+            //make dummy address i.e. prank ---| Both of these can be acheived via 'hoax'
+            hoax(address(i), SEND_VALUE);
+            //deal money to these address -----| one thing to keep in mind, uint256 can't be converted to address type but uint160 can
+            //fund the fundMe contract
+            fundMe.fund{value: SEND_VALUE}();
+        }
+        //Act
+        uint256 startingOwnerBalance = fundMe.getOwner().balance;
+        uint256 startingContractBalance = address(fundMe).balance;
+        vm.startPrank(fundMe.getOwner());
+        fundMe.cheaperWithdraw();
+        vm.stopPrank();
+
+        //Assert
+        uint256 endingOwnerBalance = fundMe.getOwner().balance;
+        uint256 endingContractBalance = address(fundMe).balance;
+        assertEq(endingContractBalance, 0);
+        assertEq(
+            endingOwnerBalance,
+            startingOwnerBalance + startingContractBalance
+        );
+    }
+
     function testWithdrawFromMultipleFunders() public funded {
         //Arrange
         uint160 numberOfFunders = 10;

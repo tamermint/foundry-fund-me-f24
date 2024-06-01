@@ -53,6 +53,25 @@ contract FundMe {
         _;
     }
 
+    //cheaper withdraw function
+    function cheaperWithdraw() public onlyOwner {
+        uint256 fundersLength = s_funders.length;
+        for (
+            uint256 funderIndex = 0;
+            funderIndex < fundersLength;
+            funderIndex++
+        ) {
+            address funder = s_funders[funderIndex];
+            s_fundersToAmountFunded[funder] = 0;
+        }
+        s_funders = new address[](0);
+
+        (bool callSuccess, ) = payable(msg.sender).call{
+            value: address(this).balance
+        }(""); //the total money in this contract
+        require(callSuccess, "Call failed");
+    }
+
     //withdraw money from this contract
     function withdraw() public onlyOwner {
         //transfer the money to the owner
