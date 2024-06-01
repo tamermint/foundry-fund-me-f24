@@ -10,6 +10,7 @@ contract FundMeTest is Test {
     FundMe public fundMe;
     uint256 constant SEND_VALUE = 0.1 ether;
     uint256 constant STARTING_BALANCE = 10 ether;
+    /* uint256 constant GAS_PRICE = 1; */
 
     address USER = makeAddr("user");
 
@@ -61,7 +62,7 @@ contract FundMeTest is Test {
 
     function testOnlyOwnerCanWithdraw() public funded {
         //tests whether onlyOwner modifier is working
-        vm.expectRevert(); //next step i.e. fundMe.withdraw to revert
+        vm.expectRevert(); //next step i.e. fundMe.withdraw to revert as vm.prank must revert
         vm.prank(USER); //reverts the user
         fundMe.withdraw();
     }
@@ -71,8 +72,13 @@ contract FundMeTest is Test {
         uint256 startingOwnerBalance = fundMe.getOwner().balance;
         uint256 startingContractBalance = address(fundMe).balance;
         //Act
+        /*  uint256 gasStart = gasleft();
+        vm.txGasPrice(GAS_PRICE); */
         vm.prank(fundMe.getOwner());
         fundMe.withdraw();
+
+        /* uint256 gasEnd = gasleft();
+        uint256 gasUsed = (gasStart - gasEnd) * tx.gasprice; */
         //Assert
         uint256 endingOwnerBalance = fundMe.getOwner().balance;
         uint256 endingContractBalance = address(fundMe).balance;
